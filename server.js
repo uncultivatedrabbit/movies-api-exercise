@@ -6,9 +6,11 @@ const helmet = require("helmet");
 const MOVIES = require("./data/movies-data-small.json");
 const app = express();
 
-const PORT = 8000;
+const PORT = process.env.PORT || 8000;
 
-app.use(morgan("dev"));
+const morganSetting = process.env.NODE_ENV === "production" ? "tiny" : "common";
+app.use(morgan(morganSetting));
+
 app.use(helmet());
 app.use(cors());
 
@@ -20,6 +22,16 @@ app.use((req, res, next) => {
     return res.status(401).json({ error: "Unauthorized request, sorry!" });
   }
   next();
+});
+
+app.use((error, req, res, next) => {
+  let response;
+  if (process.env.NODE_ENV === "production") {
+    response = { error: { message: "server error" } };
+  } else {
+    response = { error };
+  }
+  res.status(500).json(response);
 });
 
 app.get("/", (req, res) => {
